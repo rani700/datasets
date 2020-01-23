@@ -1,0 +1,1017 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "time-series-cnn.ipynb",
+      "provenance": [],
+      "collapsed_sections": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "7lVr19svUoUb",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "dataUrl = \"https://raw.githubusercontent.com/rani700/SSIM/master/SSIM/data/simplified_PM25.csv\""
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "_iGs5AmuU0tk",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "import numpy as np\n",
+        "import matplotlib.pyplot as plt\n",
+        "import pandas as pd\n",
+        "from sklearn.preprocessing import StandardScaler"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "2UDDuLkCU2QS",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "df = pd.read_csv(dataUrl)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Cc7Yrsk4U3nh",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 34
+        },
+        "outputId": "7ea7aa7f-a3c9-49d0-cbbb-66d3c7631b8d"
+      },
+      "source": [
+        "scaler = StandardScaler()\n",
+        "scaler.fit(df[['pm2.5', 'DEWP', 'TEMP', 'PRES', 'Iws', 'Is', 'Ir']])"
+      ],
+      "execution_count": 4,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "StandardScaler(copy=True, with_mean=True, with_std=True)"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 4
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "C-dFi0InU42i",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "df[['pm2.5', 'DEWP', 'TEMP', 'PRES', 'Iws', 'Is', 'Ir']] = scaler.transform(df[['pm2.5', 'DEWP', 'TEMP', 'PRES', 'Iws', 'Is', 'Ir']])"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "YvTy7zbTU6NR",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 204
+        },
+        "outputId": "b3e833ab-7028-430d-8b5f-751b0d6bd230"
+      },
+      "source": [
+        "df.head()"
+      ],
+      "execution_count": 6,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>date</th>\n",
+              "      <th>pm2.5</th>\n",
+              "      <th>DEWP</th>\n",
+              "      <th>TEMP</th>\n",
+              "      <th>PRES</th>\n",
+              "      <th>Iws</th>\n",
+              "      <th>Is</th>\n",
+              "      <th>Ir</th>\n",
+              "      <th>winddirect_0</th>\n",
+              "      <th>winddirect_1</th>\n",
+              "      <th>winddirect_2</th>\n",
+              "      <th>winddirect_3</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>2/01/2010 0:00</td>\n",
+              "      <td>0.341541</td>\n",
+              "      <td>-1.235589</td>\n",
+              "      <td>-1.349849</td>\n",
+              "      <td>0.345886</td>\n",
+              "      <td>-0.441890</td>\n",
+              "      <td>-0.069372</td>\n",
+              "      <td>-0.137706</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>2/01/2010 1:00</td>\n",
+              "      <td>0.549424</td>\n",
+              "      <td>-1.166285</td>\n",
+              "      <td>-1.349849</td>\n",
+              "      <td>0.345886</td>\n",
+              "      <td>-0.424098</td>\n",
+              "      <td>-0.069372</td>\n",
+              "      <td>-0.137706</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>2/01/2010 2:00</td>\n",
+              "      <td>0.669777</td>\n",
+              "      <td>-0.889069</td>\n",
+              "      <td>-1.431862</td>\n",
+              "      <td>0.443244</td>\n",
+              "      <td>-0.406306</td>\n",
+              "      <td>-0.069372</td>\n",
+              "      <td>-0.137706</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>2/01/2010 3:00</td>\n",
+              "      <td>0.910484</td>\n",
+              "      <td>-0.611852</td>\n",
+              "      <td>-1.431862</td>\n",
+              "      <td>0.540603</td>\n",
+              "      <td>-0.370522</td>\n",
+              "      <td>1.245425</td>\n",
+              "      <td>-0.137706</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>2/01/2010 4:00</td>\n",
+              "      <td>0.440012</td>\n",
+              "      <td>-0.611852</td>\n",
+              "      <td>-1.431862</td>\n",
+              "      <td>0.540603</td>\n",
+              "      <td>-0.352730</td>\n",
+              "      <td>2.560223</td>\n",
+              "      <td>-0.137706</td>\n",
+              "      <td>0</td>\n",
+              "      <td>0</td>\n",
+              "      <td>1</td>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>"
+            ],
+            "text/plain": [
+              "             date     pm2.5      DEWP  ...  winddirect_1  winddirect_2  winddirect_3\n",
+              "0  2/01/2010 0:00  0.341541 -1.235589  ...             0             1             0\n",
+              "1  2/01/2010 1:00  0.549424 -1.166285  ...             0             1             0\n",
+              "2  2/01/2010 2:00  0.669777 -0.889069  ...             0             1             0\n",
+              "3  2/01/2010 3:00  0.910484 -0.611852  ...             0             1             0\n",
+              "4  2/01/2010 4:00  0.440012 -0.611852  ...             0             1             0\n",
+              "\n",
+              "[5 rows x 12 columns]"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 6
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "PapCXiUtU7r5",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 68
+        },
+        "outputId": "217dcc3a-4525-4e57-850b-19bbd10d7424"
+      },
+      "source": [
+        "df.keys()"
+      ],
+      "execution_count": 7,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "Index(['date', 'pm2.5', 'DEWP', 'TEMP', 'PRES', 'Iws', 'Is', 'Ir',\n",
+              "       'winddirect_0', 'winddirect_1', 'winddirect_2', 'winddirect_3'],\n",
+              "      dtype='object')"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 7
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "J6eGSS-wU8ty",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "pm25 = df.iloc[:, 1].values"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "WSrnlVUFgFSC",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 34
+        },
+        "outputId": "1ea8434c-22db-4936-e736-c9ddd2c61325"
+      },
+      "source": [
+        "len(pm25)"
+      ],
+      "execution_count": 44,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "43800"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 44
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "NlaTtpoaU92J",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 34
+        },
+        "outputId": "4606b28e-ec5c-445e-e0f9-ecc410ed025d"
+      },
+      "source": [
+        "df.iloc[:].values.shape"
+      ],
+      "execution_count": 9,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "(43800, 12)"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 9
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "sB_79YhgU_dR",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "df.set_index('date', inplace=True)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "7rQXi4f4VA1J",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 34
+        },
+        "outputId": "e10e4a9b-2ba8-475b-d573-3146705093c7"
+      },
+      "source": [
+        "df.iloc[:].values.shape"
+      ],
+      "execution_count": 12,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "(43800, 11)"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 12
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Lv1wA5kMVC8Q",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "myData = df.iloc[:].values"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "2CcNrgVfVE1Z",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "N = 25\n",
+        "O = 5\n",
+        "P = 25"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Vph9rEVQVGA5",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "X = []\n",
+        "y = []\n",
+        "for i in range(len(myData) - (N + O + P)):\n",
+        "  temp = []\n",
+        "  # temp.append(pm25[i : i+N] + [0 for _ in range(O)] + pm25[i+N+O : i+N+O+P])\n",
+        "  temp1 = myData[i : i+N]\n",
+        "  temp2 = [[0 for __ in range(11)] for _ in range(O)]\n",
+        "  temp3 = myData[i+N+O : i+N+O+P]\n",
+        "  X.append(np.append(np.append(temp1, temp2), temp3))\n",
+        "  y.append(pm25[i+N : i+N+O])\n"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "RIf3orFnVHKQ",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "X = np.array(X)\n",
+        "y = np.array(y)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "W0bgn75YVJPI",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "X = X.reshape(X.shape[0], 11, N+O+P)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "wjAJRm5DVLTw",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 51
+        },
+        "outputId": "b36cde0a-15b2-4823-cfd5-d2fe60e1bd79"
+      },
+      "source": [
+        "print(X.shape)\n",
+        "print(y.shape)"
+      ],
+      "execution_count": 18,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "(43745, 11, 55)\n",
+            "(43745, 5)\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "AcAY1041VMgg",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "from sklearn.model_selection import train_test_split"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "j6seKiZeVOZI",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "X_train, X_test, y_train, y_test = train_test_split(X, y)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "fe8hbt1DVQNA",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 80
+        },
+        "outputId": "0898f962-d7f0-45b8-9c51-ebd0cd78a03f"
+      },
+      "source": [
+        "import tensorflow as tf\n",
+        "from keras.models import Sequential\n",
+        "from keras.layers import Dense, Flatten\n",
+        "from keras.layers.convolutional import Conv1D, Conv2D, MaxPooling1D, MaxPooling2D"
+      ],
+      "execution_count": 22,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/html": [
+              "<p style=\"color: red;\">\n",
+              "The default version of TensorFlow in Colab will soon switch to TensorFlow 2.x.<br>\n",
+              "We recommend you <a href=\"https://www.tensorflow.org/guide/migrate\" target=\"_blank\">upgrade</a> now \n",
+              "or ensure your notebook will continue to use TensorFlow 1.x via the <code>%tensorflow_version 1.x</code> magic:\n",
+              "<a href=\"https://colab.research.google.com/notebooks/tensorflow_version.ipynb\" target=\"_blank\">more info</a>.</p>\n"
+            ],
+            "text/plain": [
+              "<IPython.core.display.HTML object>"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          }
+        },
+        {
+          "output_type": "stream",
+          "text": [
+            "Using TensorFlow backend.\n"
+          ],
+          "name": "stderr"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "BGAyS3XvVSHH",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 326
+        },
+        "outputId": "90c3b36d-f99e-4b92-93b3-3d65f40ddd98"
+      },
+      "source": [
+        "!pip install keras-self-attention"
+      ],
+      "execution_count": 23,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Collecting keras-self-attention\n",
+            "  Downloading https://files.pythonhosted.org/packages/44/3e/eb1a7c7545eede073ceda2f5d78442b6cad33b5b750d7f0742866907c34b/keras-self-attention-0.42.0.tar.gz\n",
+            "Requirement already satisfied: numpy in /usr/local/lib/python3.6/dist-packages (from keras-self-attention) (1.17.4)\n",
+            "Requirement already satisfied: Keras in /usr/local/lib/python3.6/dist-packages (from keras-self-attention) (2.2.5)\n",
+            "Requirement already satisfied: pyyaml in /usr/local/lib/python3.6/dist-packages (from Keras->keras-self-attention) (3.13)\n",
+            "Requirement already satisfied: six>=1.9.0 in /usr/local/lib/python3.6/dist-packages (from Keras->keras-self-attention) (1.12.0)\n",
+            "Requirement already satisfied: keras-preprocessing>=1.1.0 in /usr/local/lib/python3.6/dist-packages (from Keras->keras-self-attention) (1.1.0)\n",
+            "Requirement already satisfied: keras-applications>=1.0.8 in /usr/local/lib/python3.6/dist-packages (from Keras->keras-self-attention) (1.0.8)\n",
+            "Requirement already satisfied: scipy>=0.14 in /usr/local/lib/python3.6/dist-packages (from Keras->keras-self-attention) (1.3.3)\n",
+            "Requirement already satisfied: h5py in /usr/local/lib/python3.6/dist-packages (from Keras->keras-self-attention) (2.8.0)\n",
+            "Building wheels for collected packages: keras-self-attention\n",
+            "  Building wheel for keras-self-attention (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for keras-self-attention: filename=keras_self_attention-0.42.0-cp36-none-any.whl size=17296 sha256=38c1b39dcc1145d0736dc46ccd23d190e99b4b8fc19970e03e8d703616278bbf\n",
+            "  Stored in directory: /root/.cache/pip/wheels/7b/05/a0/99c0cf60d383f0494e10eca2b238ea98faca9a1fe03cac2894\n",
+            "Successfully built keras-self-attention\n",
+            "Installing collected packages: keras-self-attention\n",
+            "Successfully installed keras-self-attention-0.42.0\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "zcPV4mQ5VduU",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "from keras_self_attention import SeqSelfAttention"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "8_J44ZP2VgrS",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "from keras.layers import Dropout"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "n6aAVVDMVi9q",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 34
+        },
+        "outputId": "ee21e455-e614-49c3-8546-ccf1305a7b8d"
+      },
+      "source": [
+        "X_test.shape"
+      ],
+      "execution_count": 26,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "(10937, 11, 55)"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 26
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "TjntmemKVk6K",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "X_test1 = X_test.reshape(X_test.shape[0], X_test.shape[1], X_test.shape[2], 1)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "6yLxZhl2VnGy",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 139
+        },
+        "outputId": "2228954d-41cb-409e-e8a8-f4afff55f925"
+      },
+      "source": [
+        "model = Sequential()\n",
+        "model.add(Conv2D(filters=64, kernel_size=3, activation='relu', input_shape=(X.shape[1],X.shape[2],1)))\n",
+        "model.add(Conv2D(filters=32, kernel_size=3, activation='relu'))\n",
+        "model.add(Flatten())\n",
+        "model.add(Dense(50, activation='relu'))\n",
+        "model.add(Dense(5))\n",
+        "model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])"
+      ],
+      "execution_count": 29,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "WARNING:tensorflow:From /usr/local/lib/python3.6/dist-packages/keras/backend/tensorflow_backend.py:541: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.\n",
+            "\n",
+            "WARNING:tensorflow:From /usr/local/lib/python3.6/dist-packages/keras/backend/tensorflow_backend.py:4432: The name tf.random_uniform is deprecated. Please use tf.random.uniform instead.\n",
+            "\n",
+            "WARNING:tensorflow:From /usr/local/lib/python3.6/dist-packages/keras/optimizers.py:793: The name tf.train.Optimizer is deprecated. Please use tf.compat.v1.train.Optimizer instead.\n",
+            "\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "BSXf5zwXYF2A",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 1000
+        },
+        "outputId": "08db16f6-f4be-4b7c-8122-ca8f3e1ef376"
+      },
+      "source": [
+        "model.fit(X_test1, y_test, epochs=20, verbose=1)"
+      ],
+      "execution_count": 30,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "WARNING:tensorflow:From /usr/local/lib/python3.6/dist-packages/keras/backend/tensorflow_backend.py:1033: The name tf.assign_add is deprecated. Please use tf.compat.v1.assign_add instead.\n",
+            "\n",
+            "WARNING:tensorflow:From /usr/local/lib/python3.6/dist-packages/keras/backend/tensorflow_backend.py:1020: The name tf.assign is deprecated. Please use tf.compat.v1.assign instead.\n",
+            "\n",
+            "WARNING:tensorflow:From /usr/local/lib/python3.6/dist-packages/keras/backend/tensorflow_backend.py:3005: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.\n",
+            "\n",
+            "Epoch 1/20\n",
+            "WARNING:tensorflow:From /usr/local/lib/python3.6/dist-packages/keras/backend/tensorflow_backend.py:190: The name tf.get_default_session is deprecated. Please use tf.compat.v1.get_default_session instead.\n",
+            "\n",
+            "WARNING:tensorflow:From /usr/local/lib/python3.6/dist-packages/keras/backend/tensorflow_backend.py:197: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.\n",
+            "\n",
+            "WARNING:tensorflow:From /usr/local/lib/python3.6/dist-packages/keras/backend/tensorflow_backend.py:207: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.\n",
+            "\n",
+            "WARNING:tensorflow:From /usr/local/lib/python3.6/dist-packages/keras/backend/tensorflow_backend.py:216: The name tf.is_variable_initialized is deprecated. Please use tf.compat.v1.is_variable_initialized instead.\n",
+            "\n",
+            "WARNING:tensorflow:From /usr/local/lib/python3.6/dist-packages/keras/backend/tensorflow_backend.py:223: The name tf.variables_initializer is deprecated. Please use tf.compat.v1.variables_initializer instead.\n",
+            "\n",
+            "10937/10937 [==============================] - 25s 2ms/step - loss: 0.1820 - acc: 0.3583\n",
+            "Epoch 2/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.1128 - acc: 0.3980\n",
+            "Epoch 3/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0941 - acc: 0.4178\n",
+            "Epoch 4/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0827 - acc: 0.4274\n",
+            "Epoch 5/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0754 - acc: 0.4331\n",
+            "Epoch 6/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0695 - acc: 0.4454\n",
+            "Epoch 7/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0608 - acc: 0.4510\n",
+            "Epoch 8/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0565 - acc: 0.4543\n",
+            "Epoch 9/20\n",
+            "10937/10937 [==============================] - 23s 2ms/step - loss: 0.0501 - acc: 0.4658\n",
+            "Epoch 10/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0455 - acc: 0.4699\n",
+            "Epoch 11/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0427 - acc: 0.4747\n",
+            "Epoch 12/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0377 - acc: 0.4754\n",
+            "Epoch 13/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0358 - acc: 0.4815\n",
+            "Epoch 14/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0312 - acc: 0.4968\n",
+            "Epoch 15/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0282 - acc: 0.5052\n",
+            "Epoch 16/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0276 - acc: 0.5047\n",
+            "Epoch 17/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0261 - acc: 0.5207\n",
+            "Epoch 18/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0242 - acc: 0.5208\n",
+            "Epoch 19/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0239 - acc: 0.5262\n",
+            "Epoch 20/20\n",
+            "10937/10937 [==============================] - 24s 2ms/step - loss: 0.0214 - acc: 0.5324\n"
+          ],
+          "name": "stdout"
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "<keras.callbacks.History at 0x7fb12b3f7198>"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 30
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "8Q7oADzjaf3f",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        ""
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "tXcbd9kjYfsY",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "ytest_hat = model.predict(X_test1)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Fc3QLm8xaZ2w",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "from sklearn.metrics import mean_squared_error"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "j_0I4GBaalZ3",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 34
+        },
+        "outputId": "62080311-825d-4c3b-f310-2486c16f8cca"
+      },
+      "source": [
+        "mean_squared_error(y_test ,ytest_hat)"
+      ],
+      "execution_count": 39,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "0.0211708680986341"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 39
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "sjq1kLUMaxdR",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "loss_history = model.history.history['loss']"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "C8hTfRaAcClH",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 357
+        },
+        "outputId": "e448c027-4c91-49f2-e74f-9dfdcbe2d5d5"
+      },
+      "source": [
+        "loss_history"
+      ],
+      "execution_count": 42,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "[0.1819978800834811,\n",
+              " 0.11279587867279163,\n",
+              " 0.0940763411361033,\n",
+              " 0.08272092622715278,\n",
+              " 0.07535270979149235,\n",
+              " 0.0694778878635186,\n",
+              " 0.06075288042769448,\n",
+              " 0.0565423528613829,\n",
+              " 0.05008008373534918,\n",
+              " 0.045543756501171304,\n",
+              " 0.04273430607402969,\n",
+              " 0.03769685105381734,\n",
+              " 0.035834541349998174,\n",
+              " 0.031201394229018298,\n",
+              " 0.02819900148678215,\n",
+              " 0.02755307509001255,\n",
+              " 0.02606700380326211,\n",
+              " 0.024154248325001078,\n",
+              " 0.02386775974681911,\n",
+              " 0.021413065944419784]"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 42
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "kE3HpmCbcHDe",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 265
+        },
+        "outputId": "d60ab67a-d78e-429e-9a33-955c2c80978b"
+      },
+      "source": [
+        "plt.figure(figsize=(8,4))\n",
+        "plt.xticks(np.arange(0,25,1))\n",
+        "plt.plot(range(len(loss_history)),loss_history)"
+      ],
+      "execution_count": 43,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "image/png": "iVBORw0KGgoAAAANSUhEUgAAAeoAAAD4CAYAAAAjBKUeAAAABHNCSVQICAgIfAhkiAAAAAlwSFlz\nAAALEgAACxIB0t1+/AAAADh0RVh0U29mdHdhcmUAbWF0cGxvdGxpYiB2ZXJzaW9uMy4xLjIsIGh0\ndHA6Ly9tYXRwbG90bGliLm9yZy8li6FKAAAgAElEQVR4nO3deXzV9Z3v8dcnJytZgGwsCWvYREWU\nsLng1kVbr9SqFatTnXau07He22WWa2/v7e3YO9NtOu301mnrjLbW1rHW2g61dtCpWDdkVcCgQAIB\nwhKyQCCEEJJ87h/nFzzEAAfOSc45yfv5eOSR8/ud3/nmcyAn7/Ndzu9n7o6IiIgkp7REFyAiIiKn\npqAWERFJYgpqERGRJKagFhERSWIKahERkSSWnugCeisuLvaJEycmugwREZEBs3bt2kZ3L+nrvqQL\n6okTJ7JmzZpElyEiIjJgzGzHqe7T0LeIiEgSU1CLiIgkMQW1iIhIElNQi4iIJDEFtYiISBJTUIuI\niCQxBbWIiEgSG9RB3dbRyYPLq1m1vTnRpYiIiJyTqILazK4zs81mVm1m9/dx/yIzW2dmnWZ2S6/7\nvmlmVWb2tpl9z8wsXsWfSUYojQeXV/PMhj0D9SNFRETi6oxBbWYh4EHgemAmcLuZzex12E7gbuDx\nXo+9FLgMmAVcAMwFroy56ihlhNKonFjI69uaBupHioiIxFU0Pep5QLW7b3P3DuAJYHHkAe5e6+4b\ngO5ej3UgG8gEsoAMoD7mqs/CgsmFbKlvpbH12ED+WBERkbiIJqjLgF0R23XBvjNy9xXAcmBv8LXM\n3d/ufZyZ3WNma8xsTUNDQzRNR23B5CIAzVOLiEhK6tfFZGY2BTgPKCcc7teY2RW9j3P3h9y90t0r\nS0r6vHjIObuwbDi5mSENf4uISEqKJqh3A+MitsuDfdG4CXjd3VvdvRX4PbDw7EqMTc889YoaBbWI\niKSeaIJ6NTDVzCaZWSawBFgaZfs7gSvNLN3MMggvJHvP0Hd/WzC5iK37NU8tIiKp54xB7e6dwH3A\nMsIh+6S7V5nZA2Z2I4CZzTWzOuBW4EdmVhU8/CmgBtgIrAfWu/tv++F5nNaCyYUArNymeWoREUkt\n6dEc5O7PAs/22vfliNurCQ+J935cF/DnMdYYswsi5qk/PGtMossRERGJ2qA+M1kPfZ5aRERS1ZAI\naoCFFZqnFhGR1DNkgrrn89TqVYuISCoZMkF9wdgCfZ5aRERSzpAJ6vRQGnMnFfK6Vn6LiEgKGTJB\nDeHh7+r9rTQc1jy1iIikhiEV1AuDeeqV2zX8LSIiqWFIBfX5YwvIy0rX6URFRCRlDKmgTg+lMXfi\nSC0oExGRlDGkghrC89Q1DUfYf7g90aWIiIic0ZAMatB5v0VEJDUMuaDumafW8LeIiKSCIRfU6aE0\n5k0qZIWCWkREUsCQC2oIX/ZyW8MR9h/SPLWIiCS3IRrUwXm/t2ueWkREkltUQW1m15nZZjOrNrP7\n+7h/kZmtM7NOM7ul133jzew5M3vbzDaZ2cT4lH7uZo4pIF/z1CIikgLOGNRmFgIeBK4HZgK3m9nM\nXoftBO4GHu+jiZ8C33L384B5wP5YCo6Hd8/7raAWEZHkFk2Peh5Q7e7b3L0DeAJYHHmAu9e6+wag\nO3J/EOjp7v58cFyru7fFp/TYLJxcxLaGI9RrnlpERJJYNEFdBuyK2K4L9kVjGnDQzJ42szfM7FtB\nD/0kZnaPma0xszUNDQ1RNh0bXZ9aRERSQX8vJksHrgD+CpgLTCY8RH4Sd3/I3SvdvbKkpKSfSwqb\nObZnnloLykREJHlFE9S7gXER2+XBvmjUAW8Gw+adwG+AS86uxP4RSjPmTSpkpXrUIiKSxKIJ6tXA\nVDObZGaZwBJgaZTtrwZGmFlPN/kaYNPZl9k/FkwuYluj5qlFRCR5nTGog57wfcAy4G3gSXevMrMH\nzOxGADOba2Z1wK3Aj8ysKnhsF+Fh7z+Y2UbAgH/pn6dy9jRPLSIiyS49moPc/Vng2V77vhxxezXh\nIfG+Hvs8MCuGGvvNzLEF5GeHP0+9eHa06+NEREQGzpA8M1mPUJoxf1KhFpSJiEjSGtJBDeHh7+2N\nR9jXonlqERFJPgrqnutTb9c8tYiIJJ8hH9TnjSmgIDudFTUKahERST5DPqjDn6cu0spvERFJSkM+\nqCF8ferapjb2thxNdCkiIiInUVATMU+t1d8iIpJkFNS8O0+t4W8REUk2Cmo0Ty0iIslLQR1YWFGk\neWoREUk6CurAgsmFgM77LSIiyUVBHThvdAHDczJ4vUYLykREJHkoqANpwfWpX9cZykREJIkoqCMs\nmFzEjqY29hzUPLWIiCQHBXUEzVOLiEiyUVBHODFPraAWEZEkEVVQm9l1ZrbZzKrN7P4+7l9kZuvM\nrNPMbunj/gIzqzOz78ej6P6SputTi4hIkjljUJtZCHgQuB6YCdxuZjN7HbYTuBt4/BTNfBV46dzL\nHDgLJhexs7mN3ZqnFhGRJBBNj3oeUO3u29y9A3gCWBx5gLvXuvsGoLv3g81sDjAKeC4O9fa7d8/7\nreFvERFJvGiCugzYFbFdF+w7IzNLA74N/NUZjrvHzNaY2ZqGhoZomu43M0bnM2JYhq5PLSIiSaG/\nF5PdCzzr7nWnO8jdH3L3SnevLCkp6eeSTu/EPLU+Ty0iIkkgPYpjdgPjIrbLg33RWAhcYWb3AnlA\nppm1uvt7FqQlkwWTi1hWVU/dgTbKRw5LdDkiIjKERRPUq4GpZjaJcEAvAT4eTePufkfPbTO7G6hM\n9pCGk69PXT5HQS0iIolzxqFvd+8E7gOWAW8DT7p7lZk9YGY3ApjZXDOrA24FfmRmVf1ZdH+bPio8\nT63PU4uISKJF06PG3Z8Fnu2178sRt1cTHhI/XRs/AX5y1hUmQM889QoFtYiIJJjOTHYKCyYXUXfg\nKLua2xJdioiIDGEK6lNYWBHMU2/XWcpERCRxFNSnMK00n5GapxYRkQRTUJ9CeJ66SEEtIiIJpaA+\njQWTCzVPLSIiCaWgPo0FwTy1etUiIpIoCurTmFaaT2Fupi57KSIiCaOgPo13r0+tHrWIiCSGgvoM\nFkwuYvdBzVOLiEhiKKjPoOe83+pVi4hIIiioz2BqaR6FuZk6naiIiCSEgvoMeuapV25rxt0TXY6I\niAwxCuooLKwIz1PXHTia6FJERGSIUVBHoWeeWsPfIiIy0BTUUeiZp9aCMhERGWhRBbWZXWdmm82s\n2szu7+P+RWa2zsw6zeyWiP2zzWyFmVWZ2QYzuy2exQ8UM2PB5EJer2nSPLWIiAyoMwa1mYWAB4Hr\ngZnA7WY2s9dhO4G7gcd77W8DPuHu5wPXAd81sxGxFp0ICyYXsaelnV3NmqcWEZGBE02Peh5Q7e7b\n3L0DeAJYHHmAu9e6+wagu9f+Le6+Nbi9B9gPlMSl8gG2UJ+nFhGRBIgmqMuAXRHbdcG+s2Jm84BM\noOZsH5sMppTmUaR5ahERGWADspjMzMYAjwF/6u7dfdx/j5mtMbM1DQ0NA1HSWQvPU4evT615ahER\nGSjRBPVuYFzEdnmwLypmVgD8DviSu7/e1zHu/pC7V7p7ZUlJ8o6ML5hcyJ6WdnbqvN8iIjJAognq\n1cBUM5tkZpnAEmBpNI0Hx/8a+Km7P3XuZSYHnfdbREQG2hmD2t07gfuAZcDbwJPuXmVmD5jZjQBm\nNtfM6oBbgR+ZWVXw8I8Bi4C7zezN4Gt2vzyTATClNI/iPF2fWkREBk56NAe5+7PAs732fTni9mrC\nQ+K9H/cz4Gcx1pg0zIz5EfPUZpbokkREZJDTmcnO0oLJRezVPLWIiAwQBfVZWji5EIAVNZqnFhGR\n/qegPksVJT3z1ApqERHpfwrqs2RmXDG1hN+/tY/VtVpUJiIi/UtBfQ6+9OHzKBuRwyd/sppNew4l\nuhwRERnEFNTnoDgvi8f+bD55Wel84pFV1DYeSXRJIiIySCmoz1HZiBwe+9Q8urq7ufPhlexraU90\nSSIiMggpqGMwpTSfRz85jwNHOvjEIys52NaR6JJERGSQUVDHaFb5CP7lrkpqm9q4+8erOXKsM9El\niYjIIKKgjoNLK4r5f7dfzIa6g3z6Z2s51tmV6JJERGSQUFDHyQfPH803bp7Fy1sb+fwv3qSrW5fC\nFBGR2EV1rm+Jzq2V42g5epz/+7u3KcjeyNc+eqHOBy4iIjFRUMfZn10xmYNtx/n+8mpGDMvk/utn\nJLokERFJYQrqfvCXH5jGgbYOfvjHGkYOy+DPr6xIdEkiIpKiFNT9wMx4YPEFHGrv5Gu/f4fhORks\nmTc+0WWJiEgKUlD3k1Ca8e1bL+LQ0eP8z19vZHhOBtdfOCbRZYmISIqJatW3mV1nZpvNrNrM7u/j\n/kVmts7MOs3sll733WVmW4Ovu+JVeCrITE/jh3fO4eLxI/nsE2/yytbGRJckIiIp5oxBbWYh4EHg\nemAmcLuZzex12E7gbuDxXo8tBP4PMB+YB/wfMxsZe9mpIyczxCN3zWVySS73PLaGN3YeSHRJIiKS\nQqLpUc8Dqt19m7t3AE8AiyMPcPdad98AdPd67AeB59292d0PAM8D18Wh7pQyfFgGP/3kPErys/jT\nn6xmS/3hRJckIiIpIpqgLgN2RWzXBfuiEdVjzeweM1tjZmsaGhqibDq1lBZk87NPzSczlMafPLyS\nXc1tiS5JRERSQFKcmczdH3L3SnevLCkpSXQ5/WZc4TAe+9R82o938ycPr6Th8LFElyQiIkkumqDe\nDYyL2C4P9kUjlscOStNH5/PjP51L/aFjfOKRVbQcPZ7okkREJIlFE9SrgalmNsnMMoElwNIo218G\nfMDMRgaLyD4Q7BvSLhk/koc+MYfq/Yf5s0dXc7RDF/EQEZG+nTGo3b0TuI9wwL4NPOnuVWb2gJnd\nCGBmc82sDrgV+JGZVQWPbQa+SjjsVwMPBPuGvCumlvDd2y5mzY4D3PvztRzv6r0OT0REBMw9ua7y\nVFlZ6WvWrEl0GQPm31bt5ItPb2Tx7LF852OzSUvTRTxERIYaM1vr7pV93aczkyXY7fPGc7DtON/4\nj/CpRv/2xvN1xS0RETlBQZ0E/uKqCg62dfCjl7axtb6Vb9w8i/FFwxJdloiIJIGk+HiWwP3Xz+Dv\nb7qQjbtb+OB3X+KRV7bT1Z1c0xIiIjLwFNRJwsz4+PzxPP+FRSysKOKBZzZx6w9fo3p/a6JLExGR\nBFJQJ5kxw3N4+K5KvnvbbLY1HuFD33uZB5dXa1W4iMgQpaBOQmbGRy4u4/nPX8n7zivlW8s285EH\nX6VqT0uiSxMRkQGmoE5iJflZ/PMdc/jBHZdQf+gYi7//Kv/43GaOdeoEKSIiQ4WCOgVcf+EY/vML\ni7hx9li+90I1N3zvFV0uU0RkiFBQp4gRwzL5x4/N5sd3z6X1WCc3/+A1/v7Zt3X6URGRQU5BnWKu\nnlHKc59fxJJ543nopW1c/08vsXJbU6LLEhGRfqKgTkH52Rn8/U0X8vh/nU+3w20Pvc7//s1btB7r\nTHRpIiISZwrqFHZpRTH/8bkr+ORlk/jZyh188Dsv8cctDYkuS0RE4khBneKGZabz5f8yk6c+vZDs\njDTuemQVf/3L9bS06TrXIiKDgYJ6kJgzoZDf/fcr+MzVFTz9xm7e950/8lzVvkSXJSIiMVJQDyLZ\nGSH++oMz+PfPXEZxXhb3PLaW+x5fR/2h9kSXJiIi50jXox6kjnd188MXa/jeC1txD38W+66FE5gz\nYaQuoykikmROdz3qqHrUZnadmW02s2ozu7+P+7PM7BfB/SvNbGKwP8PMHjWzjWb2tpl9MZYnItHL\nCKXx366dyh++cBV3XTqRFzfv55YfruCG//cKT67ZRftxff5aRCQVnLFHbWYhYAvwfqAOWA3c7u6b\nIo65F5jl7p82syXATe5+m5l9HLjR3ZeY2TBgE3CVu9ee6uepR90/jhzr5Ddv7ubR12rZUt/KyGEZ\n3DZ3PHcuGE/5SF37WkQkkWLtUc8Dqt19m7t3AE8Ai3sdsxh4NLj9FHCthcdXHcg1s3QgB+gADp3D\nc5AY5Walc8f8CSz73CIe/6/zmT+piIdeqmHRN5fz54+t4bXqRpJtGkRERCA9imPKgF0R23XA/FMd\n4+6dZtYCFBEO7cXAXmAY8Hl3b+79A8zsHuAegPHjx5/lU5CzYWZcWlHMpRXF7D54lJ+9voMnVu1k\nWVU900bl8YmFE7np4jJys6L51RARkf7W36u+5wFdwFhgEvCXZja590Hu/pC7V7p7ZUlJST+XJD3K\nRuTwP66bwYovXsu3bplFZnoa/+s3b7Hga3/ggd9uorbxSKJLFBEZ8qLpNu0GxkVslwf7+jqmLhjm\nHg40AR8H/sPdjwP7zexVoBLYFmvhEj/ZGSFurRzHLXPKWbfzAI++toOfrqjlkVe3c9X0Eu66dCJX\nTi0hLU2rxUVEBlo0PerVwFQzm2RmmcASYGmvY5YCdwW3bwFe8PCE507gGgAzywUWAO/Eo3CJPzNj\nzoRCvnf7xbx2/zV89tqpVO05xJ/+eDXXfPtFHn5lO4fadcYzEZGBFNXnqM3sQ8B3gRDwiLv/nZk9\nAKxx96Vmlg08BlwMNANL3H2bmeUBPwZmAgb82N2/dbqfpVXfyaWjs5vfv7WXR1+rZd3OgwzLDPHR\nS8q4c8EEZowuSHR5IiKDwulWfeuEJxK1jXUtPLqilqXr99DR2c20UXncMGssH541hoqSvESXJyKS\nshTUElfNRzp4ZsMenlm/l9U7mnGH88YUcMOsMdwwawwTinITXaKISEpRUEu/2dfSzrMb9/LMhj2s\n23kQgAvLhvPhWWP48IVjGFeok6mIiJyJgloGxO6DR3l2Qzi019e1ADB73AhumDWGD104hrEjchJc\noYhIclJQy4Db2dTGMxv38LsNe6naEz4ZXeWEkSd62qUF2QmuUEQkeSioJaG2NbTyuw17+d3Gvbyz\n7zBmMG9iITdcNJbrLxhNcV5WoksUEUkoBbUkja31h3kmGB6vaThCmsHCiiJumDWWD54/msLczESX\nKCIy4BTUknTcnc31h3lmfTi0a5vaSE8zbplTzmeunqJFaCIypCioJam5O1V7DvHkml08sWoX3e7c\nWjmOz1xdoUtwisiQoKCWlLG35Sg/eLGGJ1btwukJ7CmUacW4iAxiCmpJOXsOHuWfX6zmF6vDV1i9\nbe447r1qij7iJSKDkoJaUtbug0f55+XVPLlmF4aFA/vqCsYMV2CLyOChoJaUV3egjX9+sYZfBoG9\nZF64hz16uD6PLSKpT0Etg0bdgTYeXF7NL9fUkZZmfHzeeP7iqgpG6QQqIpLCFNQy6OxqDgf2U2vf\nDex7r6rQGc9EJCUpqGXQ2tnUxveXb+VX63aTnmbcMX8Cn75qMqX5CmwRSR2nC+q0KBu4zsw2m1m1\nmd3fx/1ZZvaL4P6VZjYx4r5ZZrbCzKrMbKOZ6S+oxM34omF885aLWP6XV3HjRWN5dEUtV3xjOV99\nZhP7D7cnujwRkZidsUdtZiFgC/B+oA5YDdzu7psijrkXmOXunzazJcBN7n6bmaUD64A/cff1ZlYE\nHHT3rlP9PPWoJRa1jUf4/vJqfv3GbjJCxp3zJ3DngglMKBqGmSW6PBGRPsU09G1mC4GvuPsHg+0v\nArj71yKOWRYcsyII531ACXA98HF3vzPaYhXUEg+1jUf43gtb+c0bu+l2GFWQxbxJRcyfVMj8SYVM\nKc1TcItI0jhdUKdH8fgyYFfEdh0w/1THuHunmbUARcA0wIMgLwGecPdv9lHgPcA9AOPHj4+iJJHT\nm1icyz9+bDaff980/rilgVXbm1m5vYnfrt8DQGFuJnMnjjwR3ueNKSCUpuAWkeQTTVDH2v7lwFyg\nDfhD8K7hD5EHuftDwEMQ7lH3c00yhIwrHMadC8LD3+7OzuY2Vm5vZlXwtayqHoD8rHTmTBzJ/ElF\nzJtUyIVlw8lMj2oJh4hIv4omqHcD4yK2y4N9fR1TFwx9DweaCPe+X3L3RgAzexa4BPgDIgPMzJhQ\nlMuEolw+Vhn+ld7bcvREaK/a3sw3Nr8DQHZGGpeMH8m8SYXMm1TIxeNGkpMZSmT5IjJERRPUq4Gp\nZjaJcCAvAT7e65ilwF3ACuAW4AV37xny/hszGwZ0AFcC34lX8SKxGjM8h8Wzy1g8uwyAptZjrK5t\nPtHr/qc/bMUdMkLGReUjTgR35cRC8rL6e0BKRCTKz1Gb2YeA7wIh4BF3/zszewBY4+5Lg49cPQZc\nDDQDS9x9W/DYO4EvAg486+5/c7qfpcVkkkxajh5n3Y4DrAzmuDfWtdDZ7WSmp/H+80Zx85wyFk0t\nIT2kYXIROXc64YlInLR1dPLGzoM8v6mepev30Hykg5L8LD4yeyw3zylnxuiCRJcoIilIQS3SDzo6\nu1m+eT+/WlvHC+/sp7PbuaCsgJsvKWfx7DIKczMTXaKIpAgFtUg/az7SwdI3d/PUujre2n2I9DTj\nmhml3DynnKunl2oFuYicloJaZAC9s+8Qv1pbx6/f2ENj6zEKczO58aKx3DKnnPPHFuhEKyLyHgpq\nkQTo7Orm5a2NPLW2juc31dPR1c2M0fnhofGLx+rCISJygoJaJMFa2o7z2w17eGptHW/uOkgozbhy\nWgk3X1LOteeVkp2hz2iLDGUKapEkUr2/lafX1fH0ut3sO9ROQXY6N84ey82XlHNR+QjSdCpTkSFH\nQS2ShLq6nddqwkPjy6r20X68m6LcTBZWFHHZlGIuqyhmfNGwRJcpIgMg1otyiEg/CKUZV0wt4Yqp\nJRxuP85zVfW8Ut3Iq9WNPLNhLwDlI3O4rKKYS6cUcWlFMSX5WQmuWkQGmnrUIknG3alpaOXV6iZe\nrW7k9W1NHGrvBGD6qPwTPe75kwspyM5IcLUiEg8a+hZJYV3dzlu7W3i1ppEVNU2s2t7Msc5uQmnG\nhWXDuWxKEZdVFHPJhJFalCaSohTUIoPIsc4u1u04yGs14WHy9XUtdHU7WelpVE4cyaUVxVw2pZgL\nxhboHOQiKUJBLTKIHW4/zqrtzbxa3cRrNY28s+8wAPnZ6cyfVMScCSOZUprH1NI8xhUOI6RV5SJJ\nR4vJRAax/OwMrj1vFNeeNwqAxtZjrKhpCnrcTfzn2/Unjs1MT2NycW4Q3PlMKc1jSmkeE4uHkZWu\nYXORZKQetcgg13L0ODUNrVTXt1Ld0Er1/la27j9M3YGj9Lz8Q2nGhMJhJ4J76qg8ppTkU1Gay7BM\nvZ8X6W/qUYsMYcNzMrhk/EguGT/ypP1HO7qoaWilpqGVrfXvBnjPlcB6lI3ICYL73RCfOipfK85F\nBoiCWmSIyskMcUHZcC4oG37S/o7ObnY2H4kI7/D3FTVNHOvsBiDNYPa4EVw9vZSrZ5TqYiMi/Siq\noW8zuw74JyAE/Ku7f73X/VnAT4E5QBNwm7vXRtw/HtgEfMXd/+F0P0tD3yLJqavb2X3gKNUNh3lz\nVwt/3Lyf9XUtAJTmZ3HV9BKumVHKZVOKyVdvW+SsxLTq28xCwBbg/UAdsBq43d03RRxzLzDL3T9t\nZkuAm9z9toj7nwIcWKmgFhk8Gg4f449bGli+eT8vbWngcHsn6WnG3ImFXDOjlKtnlFBRkqfetsgZ\nxBrUCwn3hD8YbH8RwN2/FnHMsuCYFWaWDuwDStzdzewjwGXAEaBVQS0yOB3v6mbdjgMs39zA8nf2\ns7k+/DGx8pE54dCeXsrCiiKdlEWkD7EuJisDdkVs1wHzT3WMu3eaWQtQZGbtwP8g3Bv/q9MUeA9w\nD8D48eOjKElEkk1GKI35k4uYP7mI+6+fwe6DR3lx836Wv7OfX66p46crdpCVnsalFUVcHQT3uEJd\ndETkTPp7MdlXgO+4e+vphr7c/SHgIQj3qPu5JhEZAGUjcrhj/gTumD+B9uNdrNrezAvv7Gf55v0s\n//cqoIoppXlcPb2Eq2eUUjmhkMx0nUlNpLdogno3MC5iuzzY19cxdcHQ93DCi8rmA7eY2TeBEUC3\nmbW7+/djrlxEUkZ2RohF00pYNK2Er3A+2xuP8MI7+3lx834efW0H//LydnIzQ0wuyWNUQTZjhmcz\neng2owvC33v25Wbpgyoy9EQzR51OeDHZtYQDeTXwcXevijjmM8CFEYvJPuruH+vVzlfQHLWI9HLk\nWCevVjfy8tZGdh1oY19LO/sOtXOw7fh7js3PSg8HeESIn3S7IJvC3EwtXpOUE9McdTDnfB+wjPDH\nsx5x9yozewBY4+5LgYeBx8ysGmgGlsSvfBEZzHKz0vnA+aP5wPmjT9p/tKOL+kPt7G1pP+n7vpZ2\n9h5qZ2t9I/sPt9Pdq6+RmZ7GqIIsxhTkMGp4NlNK8rh8ahEXlY/QRUokJekUoiKSsjq7umls7WBv\ny9ETYb4vCPOenvnO5jbcw73x+ZOLuHxKEZdPLaGiJFc9b0kaOoWoiAxK6aG0E8Pfp3KwrYPXapp4\npTp8WdCei5SMLsjmsinFXDG1mEunFFGaf+o2RBJJPWoRGVJ2NbfxSnUjr2xt5NWaxhNz4dNH5XP5\n1GIun1LMvEmFWrgmA0rXoxYR6UN3t7Np7yFe3hruba+qbaajs5uMkHHx+JFcPqWYy6YUc1H5cM1v\nS79SUIuIRKH9eBdrag+Ee9zVDVTtOXRifntBRRGXTynm8qnFTC7W/LbEl+aoRUSikJ0RCg9/Ty0G\nZtB8pIMVNU28Ut3Ay1sbeX5TeH57VEEWM8cUMG10PtNH5TN9dD4VJXk6Par0CwW1iMgpFOZm8uFZ\nY/jwrDEA7Gg6wivVjaza3szmfYd5pbqR413hUck0g4nFucwYnc+0Ue8G+ISiXEJp6n3LuVNQi4hE\naUJRLhOKcrlj/gQgfCGS2sYjbK4/zJZ9h9lcf5hNew7x+7f20TOrmJWexpTSPKYHve9po/OZMTqf\n0QXZGj6XqCioRUTOUUYojamj8pk6Kh9mvbv/aEcX1ftb2Vx/mM37DrG5vpXXqpt4et27Z1/Oz04/\n0eueHvTCi/MyyUoPkZMZIjsjRHZ6mhaxiYJaRCTecjJDXFg+nAvLh5+0/2BbB1vq3w3wLfta+e36\nPfx8Zecp28oIWTi0M0LkZNNMy+sAAAw8SURBVITIzkgjJyNEVq/t7IivE/szQ+RlpVOUl0VRbibF\neVkU5mbq4icpRkEtIjJARgzLZN6kQuZNKjyxz93Zf/gYW+oPc7DtOEePd3HseBdHj3fRfrw7+N7z\n1c3Rji7aO7s42tHFwaPHaW95d7vnmI6u7tPWkZ+dTnEQ3kV5mRTlZVGcG/5elJdJUW4WxcH+ETkZ\npGmOPaEU1CIiCWRmjCoIXyEsXrq6/US4H2rvpPnIMRpbO2hq7aCp9RhNRzrCX63HqG1sY+2OAzQf\n6XjPedMhvEiuMAjuwiDMi/MyT1wIZeyIHEYH9aun3j8U1CIig0wozcjNSic3GPaeVJx7xsd0dTsH\n28IB3th67KRQb4y4vbHuII2tHbQee+9wfXFeFmOGZ5/4Gj0858QlS8cOz2HU8Cyy0vURtrOloBYR\nEUJpFgx9ZzFtVP4Zjz/cfjx8JbPgAih7W9rZ23KUvS3t7Ghq4/VtTRxqf2+YF+VmMnp4NmMiQrzn\ne35WBqE0Iz1kpKcZ6WlphE7cPnk7FOwbCivnFdQiInLW8rMzyM/OCK94P4XWY50nrmTWE+LhYD9K\n3YE2Vtc203L0vdcdPxuhiNBOTzPSQ2kntkNpRl5WOhOKhjEx+GjdxKJhTCzOZXRBdsrMvSuoRUSk\nX+RlpTOlNI8ppXmnPKat490wb+voorO7m85up6vb6ezy92x3dTvHu7vp6vIT+3tvd3Y7nV3ddHU7\nLUePU9NwhOXvNJy0yC4zPY0JhcNOCu9wmA9j7IicpDpJTVRBbWbXAf8EhIB/dfev97o/C/gpMAdo\nAm5z91ozez/wdSAT6AD+2t1fiGP9IiKSwoZlpjO5JI/JJacO83jo6nb2HWqntvEItU1H2NHURm1j\n+PvLWxs41vluiGeEjHGF4V74xKJcJha/G+hlI3IG/LPtZwxqMwsBDwLvB+qA1Wa21N03RRz2KeCA\nu08xsyXAN4DbgEbgv7j7HjO7AFgGlMX7SYiIiJxOKM0oG5FD2YgcLptSfNJ93d1O/eF2ahvb2NF0\nhO1NR9jR2EZt0xFW1DRx9HjXiWPT08Ih/sDi87liasmA1B5Nj3oeUO3u2wDM7AlgMRAZ1IuBrwS3\nnwK+b2bm7m9EHFMF5JhZlrsfi7lyERGROEhLs2BxWw4LK4pOuq/nc+49ve+e3nhhbuaA1RdNUJcB\nuyK264D5pzrG3TvNrAUoItyj7nEzsE4hLSIiqSLyc+7zJxed+QH9YEAWk5nZ+YSHwz9wivvvAe4B\nGD9+/ECUJCIikhKimRHfDYyL2C4P9vV5jJmlA8MJLyrDzMqBXwOfcPeavn6Auz/k7pXuXllSMjBj\n/iIiIqkgmqBeDUw1s0lmlgksAZb2OmYpcFdw+xbgBXd3MxsB/A64391fjVfRIiIiQ8UZg9rdO4H7\nCK/Yfht40t2rzOwBM7sxOOxhoMjMqoEvAPcH++8DpgBfNrM3g6/SuD8LERGRQcrc+zgLewJVVlb6\nmjVrEl2GiIjIgDGzte5e2dd9utSJiIhIElNQi4iIJDEFtYiISBJLujlqM2sAdsS52WJOPvnKUGqz\nv9od6rXq+ev56/nH31CudYK79/n55KQL6v5gZmtONUk/2Nvsr3aHeq16/nr+ev5D9/n3Z7t90dC3\niIhIElNQi4iIJLGhEtQPDeE2+6vdoV6rnn//SJVa9fz7x1CvtU9DYo5aREQkVQ2VHrWIiEhKUlCL\niIgksUEd1GZ2nZltNrNqM7v/zI+Iqs1HzGy/mb0Vj/aCNseZ2XIz22RmVWb22Ti0mW1mq8xsfdDm\n38aj1qDtkJm9YWbPxLHNWjPbGFy4JS4nezezEWb2lJm9Y2Zvm9nCOLQ5PeICM2+a2SEz+1wc2v18\n8P/0lpn9m5llx6HNzwbtVcVSY1+/82ZWaGbPm9nW4PvIOLR5a1Brt5md08deTtHut4LfgQ1m9uvg\nqn6xtvnVoL03zew5Mxsbj1oj7vtLM3MzK45DrV8xs90Rv7MfikedZvbfgn/XKjP75tm0eZpafxFR\nZ62ZvRmHNmeb2es9f1vMbF4c2rzIzFYEf7N+a2YFZ9PmWXP3QfkFhIAaYDKQCawHZsah3UXAJcBb\ncax1DHBJcDsf2BJrrYABecHtDGAlsCBO9X4BeBx4Jo7/BrVAcZx/Bx4F/iy4nQmM6IffsX2ET1QQ\nSztlwHYgJ9h+Erg7xjYvAN4ChgHpwH8CU86xrff8zgPfJHz5WghfLe8bcWjzPGA68CJQGcdaPwCk\nB7e/EadaCyJu/3fgh/GoNdg/jvDVCnec7WviFLV+BfirGH6X+mrz6uB3KivYLo3X84+4/9vAl+NQ\n63PA9cHtDwEvxqHN1cCVwe1PAl8913/faL4Gc496HlDt7tvcvQN4Algca6Pu/hLQHGs7vdrc6+7r\ngtuHCV9OtCzGNt3dW4PNjOAr5pWDZlYOfBj411jb6k9mNpzwC+xhAHfvcPeDcf4x1wI17h6PM+ml\nAzlmlk44XPfE2N55wEp3b/PwpWr/CHz0XBo6xe/8YsJvhAi+fyTWNt39bXfffC41nqHd54J/A4DX\ngfI4tHkoYjOXc3htneZvyXeAv4lzm+fsFG3+BfB1dz8WHLM/Tu0CYGYGfAz4tzi06UBPj3c4Z/na\nOkWb04CXgtvPAzefTZtnazAHdRmwK2K7jhjDbyCY2UTgYsI94FjbCgVDR/uB59095jaB7xL+I9Id\nh7YiOfCcma01s3vi0N4koAH4cTBM/69mlhuHdiMt4Sz/kPTF3XcD/wDsBPYCLe7+XIzNvgVcYWZF\nZjaMcE9iXIxtRhrl7nuD2/uAUXFsuz99Evh9PBoys78zs13AHcCX49TmYmC3u6+PR3sR7guG6h85\n22mKU5hG+PdrpZn90czmxqHNSFcA9e6+NQ5tfQ74VvB/9Q/AF+PQZhXvdvxuJb6vrfcYzEGdcsws\nD/gV8Lle79jPibt3uftswj2IeWZ2QYz13QDsd/e1sdbWh8vd/RLgeuAzZrYoxvbSCQ9X/cDdLwaO\nEB6ijQszywRuBH4Zh7ZGEn7RTwLGArlmdmcsbbr724SHeZ8D/gN4E+iKsdRT/SwnDqM1/c3MvgR0\nAj+PR3vu/iV3Hxe0d1+s7QVvqP4ncQr9CD8AKoDZhN8IfjsObaYDhcAC4K+BJ4NecLzcThzeBAf+\nAvh88H/1eYJRthh9ErjXzNYSnq7siEObpzSYg3o3J7/LKQ/2JSUzyyAc0j9396fj2XYw5LscuC7G\npi4DbjSzWsJTCdeY2c9ibBM40avsGUL7NeGpi1jUAXURowhPEQ7ueLkeWOfu9XFo633AdndvcPfj\nwNPApbE26u4Pu/scd18EHCC89iFe6s1sDEDw/ayHPgeSmd0N3ADcEbyxiKefE5+hzwrCb9bWB6+x\ncmCdmY2OpVF3rw/etHcD/0Lsry0Iv76eDqbYVhEeYTurhW+nEkz/fBT4RTzaA+4i/JqC8BvrmJ+/\nu7/j7h9w9zmE31DUxNrm6QzmoF4NTDWzSUHvZwmwNME19Sl4J/ow8La7/2Oc2izpWd1qZjnA+4F3\nYmnT3b/o7uXuPpHwv+cL7h5Tzy+oL9fM8ntuE178E9OqenffB+wys+nBrmuBTTEVerJ4vuPfCSww\ns2HB78K1hNcpxMTMSoPv4wn/4Xs81jYjLCX8B5Dg+7/Hse24MrPrCE/X3OjubXFqc2rE5mJifG0B\nuPtGdy9194nBa6yO8CLTfbG02/OGKnATMb62Ar8hvKAMM5tGeLFmvK4k9T7gHXevi1N7e4Arg9vX\nADEPp0e8ttKA/wX8MNY2T6s/V6ol+ovwvNwWwu92vhSnNv+N8PDRccIvpE/Foc3LCQ8dbiA8RPkm\n8KEY25wFvBG0+RZnuXoyivavIk6rvgmvzF8ffFXF8f9qNrAm+Df4DTAyTu3mAk3A8Dj+e/4t4T/2\nbwGPEaymjbHNlwm/OVkPXBtDO+/5nQeKgD8Q/qP3n0BhHNq8Kbh9DKgHlsWp1mrC61V6XltntUL7\nFG3+Kvi/2gD8FiiLR6297q/l7Fd991XrY8DGoNalwJg4tJkJ/Cz4N1gHXBOv5w/8BPh0HH9XLwfW\nBq+DlcCcOLT5WcLZsgX4OsFZPvvrS6cQFRERSWKDeehbREQk5SmoRUREkpiCWkREJIkpqEVERJKY\nglpERCSJKahFRESSmIJaREQkif1/Zm3Qq3bKU6EAAAAASUVORK5CYII=\n",
+            "text/plain": [
+              "<Figure size 576x288 with 1 Axes>"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          }
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "v4jusCHucRDl",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        ""
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Tf7Pkt_yfB4y",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        ""
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "GrELVih-fFy1",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        ""
+      ],
+      "execution_count": 0,
+      "outputs": []
+    }
+  ]
+}
